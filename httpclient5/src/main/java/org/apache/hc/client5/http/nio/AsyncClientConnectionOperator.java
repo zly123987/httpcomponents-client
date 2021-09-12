@@ -67,6 +67,30 @@ public interface AsyncClientConnectionOperator {
             Object attachment,
             FutureCallback<ManagedAsyncClientConnection> callback);
 
+    /**
+     * Initiates operation to create a connection to the remote endpoint using
+     * the provided {@link ConnectionInitiator}.
+     *
+     * @param connectionInitiator the connection initiator.
+     * @param host the address of the opposite endpoint.
+     * @param localAddress the address of the local endpoint.
+     * @param connectTimeout the timeout of the connect operation.
+     * @param attachment the attachment, which can be any object representing custom parameter
+     *                    of the operation.
+     * @param callback the future result callback.
+     *
+     * @since 5.2
+     */
+    default Future<ManagedAsyncClientConnection> connect(
+            ConnectionInitiator connectionInitiator,
+            HttpHost host,
+            SocketAddress localAddress,
+            Timeout connectTimeout,
+            Timeout handshakeTimeout,
+            Object attachment,
+            FutureCallback<ManagedAsyncClientConnection> callback) {
+        return connect(connectionInitiator, host, localAddress, connectTimeout, handshakeTimeout, attachment, callback);
+    }
 
     /**
      * Upgrades transport security of the given managed connection

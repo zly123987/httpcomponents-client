@@ -48,22 +48,25 @@ public class ConnectionConfig implements Cloneable {
 
     private final Timeout connectTimeout;
     private final Timeout socketTimeout;
+    private final Timeout handshakeTimeout;
     private final TimeValue validateAfterInactivity;
 
     /**
      * Intended for CDI compatibility
      */
     protected ConnectionConfig() {
-        this(DEFAULT_CONNECT_TIMEOUT, null, null);
+        this(DEFAULT_CONNECT_TIMEOUT, null, null, null);
     }
 
     ConnectionConfig(
             final Timeout connectTimeout,
             final Timeout socketTimeout,
+            final Timeout handshakeTimeout,
             final TimeValue validateAfterInactivity) {
         super();
         this.connectTimeout = connectTimeout;
         this.socketTimeout = socketTimeout;
+        this.handshakeTimeout = handshakeTimeout;
         this.validateAfterInactivity = validateAfterInactivity;
     }
 
@@ -79,6 +82,13 @@ public class ConnectionConfig implements Cloneable {
      */
     public Timeout getConnectTimeout() {
         return connectTimeout;
+    }
+
+    /**
+     * @see Builder#setHandshakeTimeout(Timeout)
+     */
+    public Timeout getHandshakeTimeout() {
+        return handshakeTimeout;
     }
 
     /**
@@ -99,6 +109,7 @@ public class ConnectionConfig implements Cloneable {
         builder.append("[");
         builder.append(", connectTimeout=").append(connectTimeout);
         builder.append(", socketTimeout=").append(socketTimeout);
+        builder.append(", handshakeTimeout=").append(handshakeTimeout);
         builder.append(", validateAfterInactivity=").append(validateAfterInactivity);
         builder.append("]");
         return builder.toString();
@@ -112,6 +123,7 @@ public class ConnectionConfig implements Cloneable {
         return new Builder()
                 .setConnectTimeout(config.getConnectTimeout())
                 .setSocketTimeout(config.getSocketTimeout())
+                .setHandshakeTimeout(config.getHandshakeTimeout())
                 .setValidateAfterInactivity(config.getValidateAfterInactivity());
     }
 
@@ -119,13 +131,13 @@ public class ConnectionConfig implements Cloneable {
 
         private Timeout socketTimeout;
         private Timeout connectTimeout;
+        private Timeout handshakeTimeout;
         private TimeValue validateAfterInactivity;
 
         Builder() {
             super();
             this.connectTimeout = DEFAULT_CONNECT_TIMEOUT;
         }
-
 
         /**
          * @see #setSocketTimeout(Timeout)
@@ -138,7 +150,7 @@ public class ConnectionConfig implements Cloneable {
         /**
          * Determines the default socket timeout value for I/O operations.
          * <p>
-         * Default: {@code null}
+         * Default: {@code null} (undefined)
          * </p>
          *
          * @return the default socket timeout value for I/O operations.
@@ -151,7 +163,8 @@ public class ConnectionConfig implements Cloneable {
         /**
          * Determines the timeout until a new connection is fully established.
          * This may also include transport security negotiation exchanges
-         * such as {@code SSL} or {@code TLS} protocol negotiation).
+         * such as {@code SSL} or {@code TLS} protocol negotiation unless
+         * a different timeout value set with {@link #setHandshakeTimeout(Timeout)}.
          * <p>
          * A timeout value of zero is interpreted as an infinite timeout.
          * </p>
@@ -173,11 +186,34 @@ public class ConnectionConfig implements Cloneable {
         }
 
         /**
+         * Determines the timeout used by transport security negotiation exchanges
+         * such as {@code SSL} or {@code TLS} protocol negotiation).
+         * <p>
+         * A timeout value of zero is interpreted as an infinite timeout.
+         * </p>
+         * <p>
+         * Default: {@code null} (undefined)
+         * </p>
+         */
+        public Builder setHandshakeTimeout(final Timeout handshakeTimeout) {
+            this.handshakeTimeout = handshakeTimeout;
+            return this;
+        }
+
+        /**
+         * @see #setHandshakeTimeout(Timeout)
+         */
+        public Builder setHandshakeTimeout(final long handshakeTimeout, final TimeUnit timeUnit) {
+            this.handshakeTimeout = Timeout.of(handshakeTimeout, timeUnit);
+            return this;
+        }
+
+        /**
          * Defines period of inactivity after which persistent connections must
          * be re-validated prior to being leased to the consumer. Negative values passed
          * to this method disable connection validation.
          * <p>
-         * Default: {@code null}
+         * Default: {@code null} (undefined)
          * </p>
          */
         public Builder setValidateAfterInactivity(final TimeValue validateAfterInactivity) {
@@ -197,6 +233,7 @@ public class ConnectionConfig implements Cloneable {
             return new ConnectionConfig(
                     connectTimeout != null ? connectTimeout : DEFAULT_CONNECT_TIMEOUT,
                     socketTimeout,
+                    handshakeTimeout,
                     validateAfterInactivity);
         }
 

@@ -400,12 +400,19 @@ public class PoolingAsyncClientConnectionManager implements AsyncClientConnectio
         final InetSocketAddress localAddress = route.getLocalSocketAddress();
         final ConnectionConfig connectionConfig = resolveConnectionConfig(route);
         final Timeout connectTimeout = timeout != null ? timeout : connectionConfig.getConnectTimeout();
+        final Timeout handshakeTimeout = connectionConfig.getHandshakeTimeout();
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("{} connecting endpoint to {} ({})", ConnPoolSupport.getId(endpoint), host, connectTimeout);
         }
         final Future<ManagedAsyncClientConnection> connectFuture = connectionOperator.connect(
-                connectionInitiator, host, localAddress, connectTimeout, attachment, new FutureCallback<ManagedAsyncClientConnection>() {
+                connectionInitiator,
+                host,
+                localAddress,
+                connectTimeout,
+                handshakeTimeout,
+                attachment,
+                new FutureCallback<ManagedAsyncClientConnection>() {
 
                     @Override
                     public void completed(final ManagedAsyncClientConnection connection) {

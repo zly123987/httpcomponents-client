@@ -359,7 +359,8 @@ public class BasicHttpClientConnectionManager implements HttpClientConnectionMan
             host = route.getTargetHost();
         }
         final ConnectionConfig config = connectionConfig != null ? connectionConfig : ConnectionConfig.DEFAULT;
-        final TimeValue connectTimeout = timeout != null ? timeout : config.getConnectTimeout();
+        final Timeout connectTimeout = timeout != null ? Timeout.of(timeout.getDuration(), timeout.getTimeUnit()) : config.getConnectTimeout();
+        final Timeout handshakeTimeout = config.getHandshakeTimeout();
         final ManagedHttpClientConnection connection = internalEndpoint.getConnection();
         if (LOG.isDebugEnabled()) {
             LOG.debug("{} connecting endpoint to {} ({})", ConnPoolSupport.getId(endpoint), host, connectTimeout);
@@ -369,6 +370,7 @@ public class BasicHttpClientConnectionManager implements HttpClientConnectionMan
                 host,
                 route.getLocalSocketAddress(),
                 connectTimeout,
+                handshakeTimeout,
                 this.socketConfig,
                 context);
         if (LOG.isDebugEnabled()) {
@@ -387,9 +389,11 @@ public class BasicHttpClientConnectionManager implements HttpClientConnectionMan
         Args.notNull(endpoint, "Endpoint");
         Args.notNull(route, "HTTP route");
         final InternalConnectionEndpoint internalEndpoint = cast(endpoint);
+        final ConnectionConfig config = connectionConfig != null ? connectionConfig : ConnectionConfig.DEFAULT;
         this.connectionOperator.upgrade(
                 internalEndpoint.getConnection(),
                 internalEndpoint.getRoute().getTargetHost(),
+                config.getHandshakeTimeout(),
                 context);
     }
 

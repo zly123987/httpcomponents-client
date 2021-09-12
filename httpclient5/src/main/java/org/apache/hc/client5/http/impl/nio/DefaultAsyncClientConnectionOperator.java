@@ -73,6 +73,7 @@ final class DefaultAsyncClientConnectionOperator implements AsyncClientConnectio
             final HttpHost host,
             final SocketAddress localAddress,
             final Timeout connectTimeout,
+            final Timeout handshakeTimeout,
             final Object attachment,
             final FutureCallback<ManagedAsyncClientConnection> callback) {
         Args.notNull(connectionInitiator, "Connection initiator");
@@ -95,15 +96,17 @@ final class DefaultAsyncClientConnectionOperator implements AsyncClientConnectio
                         final DefaultManagedAsyncClientConnection connection = new DefaultManagedAsyncClientConnection(session);
                         if (tlsStrategy != null && URIScheme.HTTPS.same(host.getSchemeName())) {
                             try {
+                                final Timeout socketTimeout = connection.getSocketTimeout();
                                 tlsStrategy.upgrade(
                                         connection,
                                         host,
                                         attachment,
-                                        null,
+                                        handshakeTimeout != null ? handshakeTimeout : connectTimeout,
                                         new FutureContribution<TransportSecurityLayer>(future) {
 
                                             @Override
                                             public void completed(final TransportSecurityLayer transportSecurityLayer) {
+                                                connection.setSocketTimeout(socketTimeout);
                                                 future.completed(connection);
                                             }
 
@@ -129,6 +132,17 @@ final class DefaultAsyncClientConnectionOperator implements AsyncClientConnectio
                 });
         future.setDependency(sessionFuture);
         return future;
+    }
+
+    @Override
+    public Future<ManagedAsyncClientConnection> connect(
+            final ConnectionInitiator connectionInitiator,
+            final HttpHost host,
+            final SocketAddress localAddress,
+            final Timeout connectTimeout,
+            final Object attachment,
+            final FutureCallback<ManagedAsyncClientConnection> callback) {
+        return connect(connectionInitiator, host, localAddress, connectTimeout, connectTimeout, attachment, callback);
     }
 
     @Override

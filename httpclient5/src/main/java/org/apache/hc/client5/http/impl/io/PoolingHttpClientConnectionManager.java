@@ -409,7 +409,8 @@ public class PoolingHttpClientConnectionManager
         }
         final SocketConfig socketConfig = resolveSocketConfig(route);
         final ConnectionConfig connectionConfig = resolveConnectionConfig(route);
-        final TimeValue connectTimeout = timeout != null ? timeout : connectionConfig.getConnectTimeout();
+        final Timeout connectTimeout = timeout != null ? Timeout.of(timeout.getDuration(), timeout.getTimeUnit()) : connectionConfig.getConnectTimeout();
+        final Timeout handshakeTimeout = connectionConfig.getHandshakeTimeout();
         if (LOG.isDebugEnabled()) {
             LOG.debug("{} connecting endpoint to {} ({})", ConnPoolSupport.getId(endpoint), host, connectTimeout);
         }
@@ -418,7 +419,8 @@ public class PoolingHttpClientConnectionManager
                 conn,
                 host,
                 route.getLocalSocketAddress(),
-                timeout,
+                connectTimeout,
+                handshakeTimeout,
                 socketConfig,
                 context);
         if (LOG.isDebugEnabled()) {
@@ -436,7 +438,9 @@ public class PoolingHttpClientConnectionManager
         final InternalConnectionEndpoint internalEndpoint = cast(endpoint);
         final PoolEntry<HttpRoute, ManagedHttpClientConnection> poolEntry = internalEndpoint.getValidatedPoolEntry();
         final HttpRoute route = poolEntry.getRoute();
-        this.connectionOperator.upgrade(poolEntry.getConnection(), route.getTargetHost(), context);
+        final ConnectionConfig connectionConfig = resolveConnectionConfig(route);
+        final Timeout handshakeTimeout = connectionConfig.getHandshakeTimeout();
+        this.connectionOperator.upgrade(poolEntry.getConnection(), route.getTargetHost(), handshakeTimeout, context);
     }
 
     @Override

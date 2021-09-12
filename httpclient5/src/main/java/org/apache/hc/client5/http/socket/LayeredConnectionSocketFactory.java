@@ -33,6 +33,7 @@ import java.net.Socket;
 import org.apache.hc.core5.annotation.Contract;
 import org.apache.hc.core5.annotation.ThreadingBehavior;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 
 /**
  * Extended {@link ConnectionSocketFactory} interface for layered sockets such as SSL/TLS.
@@ -61,5 +62,31 @@ public interface LayeredConnectionSocketFactory extends ConnectionSocketFactory 
         String target,
         int port,
         HttpContext context) throws IOException;
+
+    /**
+     * Returns a socket connected to the given host that is layered over an
+     * existing socket.  Used primarily for creating secure sockets through
+     * proxies.
+     *
+     * @param socket the existing socket
+     * @param target the name of the target host.
+     * @param port the port to connect to on the target host.
+     * @param context the actual HTTP context.
+     * @param handshakeTimeout handshake timeout, if applicable.
+     *
+     * @return Socket a new socket
+     *
+     * @throws IOException if an I/O error occurs while creating the socket
+     *
+     * @since 5.2
+     */
+    default Socket createLayeredSocket(
+            Socket socket,
+            String target,
+            int port,
+            Timeout handshakeTimeout,
+            HttpContext context) throws IOException {
+        return createLayeredSocket(socket, target, port, context);
+    }
 
 }
