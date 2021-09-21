@@ -67,6 +67,7 @@ import org.apache.hc.core5.http.nio.HandlerFactory;
 import org.apache.hc.core5.http.nio.command.RequestExecutionCommand;
 import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http2.HttpVersionPolicy;
 import org.apache.hc.core5.http2.nio.command.PingCommand;
 import org.apache.hc.core5.http2.nio.support.BasicPingHandler;
 import org.apache.hc.core5.http2.ssl.ApplicationProtocol;
@@ -411,7 +412,7 @@ public class PoolingAsyncClientConnectionManager implements AsyncClientConnectio
                 localAddress,
                 connectTimeout,
                 handshakeTimeout,
-                attachment,
+                route.isTunnelled() ? HttpVersionPolicy.FORCE_HTTP_1 : attachment,
                 new FutureCallback<ManagedAsyncClientConnection>() {
 
                     @Override
